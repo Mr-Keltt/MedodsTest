@@ -13,16 +13,17 @@ const (
 )
 
 type TaskRecurrence struct {
-	ID           int64      `json:"id"`
-	Title        string     `json:"title"`
-	Description  string     `json:"description"`
-	Type         Type       `json:"type"`
-	StartsAt     time.Time  `json:"starts_at"`
-	EndsOn       *time.Time `json:"ends_on,omitempty"`
-	IntervalDays *int       `json:"interval_days,omitempty"`
-	DayOfMonth   *int       `json:"day_of_month,omitempty"`
-	CreatedAt    time.Time  `json:"created_at"`
-	UpdatedAt    time.Time  `json:"updated_at"`
+	ID            int64       `json:"id"`
+	Title         string      `json:"title"`
+	Description   string      `json:"description"`
+	Type          Type        `json:"type"`
+	StartsAt      time.Time   `json:"starts_at"`
+	EndsOn        *time.Time  `json:"ends_on,omitempty"`
+	IntervalDays  *int        `json:"interval_days,omitempty"`
+	DayOfMonth    *int        `json:"day_of_month,omitempty"`
+	SpecificDates []time.Time `json:"specific_dates,omitempty"`
+	CreatedAt     time.Time   `json:"created_at"`
+	UpdatedAt     time.Time   `json:"updated_at"`
 }
 
 func (t Type) Valid() bool {

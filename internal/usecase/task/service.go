@@ -10,14 +10,16 @@ import (
 )
 
 type Service struct {
-	repo Repository
-	now  func() time.Time
+	repo         Repository
+	synchronizer TaskListSynchronizer
+	now          func() time.Time
 }
 
-func NewService(repo Repository) *Service {
+func NewService(repo Repository, synchronizer TaskListSynchronizer) *Service {
 	return &Service{
-		repo: repo,
-		now:  func() time.Time { return time.Now().UTC() },
+		repo:         repo,
+		synchronizer: synchronizer,
+		now:          func() time.Time { return time.Now().UTC() },
 	}
 }
 
@@ -31,8 +33,12 @@ func (s *Service) Create(ctx context.Context, input CreateInput) (*taskdomain.Ta
 		Title:       normalized.Title,
 		Description: normalized.Description,
 		Status:      normalized.Status,
+		ScheduledAt: normalized.ScheduledAt,
 	}
 	now := s.now()
+	if model.ScheduledAt.IsZero() {
+		model.ScheduledAt = now
+	}
 	model.CreatedAt = now
 	model.UpdatedAt = now
 
@@ -67,6 +73,7 @@ func (s *Service) Update(ctx context.Context, id int64, input UpdateInput) (*tas
 		Title:       normalized.Title,
 		Description: normalized.Description,
 		Status:      normalized.Status,
+		ScheduledAt: normalized.ScheduledAt,
 		UpdatedAt:   s.now(),
 	}
 
@@ -87,6 +94,12 @@ func (s *Service) Delete(ctx context.Context, id int64) error {
 }
 
 func (s *Service) List(ctx context.Context) ([]taskdomain.Task, error) {
+	if s.synchronizer != nil {
+		if err := s.synchronizer.SyncFutureTasks(ctx); err != nil {
+			return nil, err
+		}
+	}
+
 	return s.repo.List(ctx)
 }
 

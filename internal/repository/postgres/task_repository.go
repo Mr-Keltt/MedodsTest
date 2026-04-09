@@ -226,6 +226,7 @@ func (r *TaskRepository) DeleteFutureByRecurrenceID(ctx context.Context, recurre
 		DELETE FROM tasks
 		WHERE recurrence_id = $1
 			AND scheduled_at >= $2
+			AND status <> 'done'
 	`
 
 	_, err := r.pool.Exec(ctx, query, recurrenceID, from)
