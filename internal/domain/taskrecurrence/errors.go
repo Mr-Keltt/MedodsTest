@@ -2,4 +2,7 @@ package taskrecurrence
 
 import "errors"
 
-var ErrInvalidType = errors.New("invalid task recurrence type")
+var (
+	ErrNotFound    = errors.New("task recurrence not found")
+	ErrInvalidType = errors.New("invalid task recurrence type")
+)
