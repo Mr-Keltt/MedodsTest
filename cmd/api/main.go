@@ -41,8 +41,9 @@ func main() {
 	taskRecurrenceUsecase := taskrecurrenceusecase.NewService(taskRecurrenceRepo, taskRepo)
 	taskUsecase := task.NewService(taskRepo, taskRecurrenceUsecase)
 	taskHandler := httphandlers.NewTaskHandler(taskUsecase)
+	taskRecurrenceHandler := httphandlers.NewTaskRecurrenceHandler(taskRecurrenceUsecase)
 	docsHandler := swaggerdocs.NewHandler()
-	router := transporthttp.NewRouter(taskHandler, docsHandler)
+	router := transporthttp.NewRouter(taskHandler, taskRecurrenceHandler, docsHandler)
 
 	server := &http.Server{
 		Addr:              cfg.HTTPAddr,

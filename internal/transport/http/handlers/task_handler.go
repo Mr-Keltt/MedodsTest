@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/gorilla/mux"
 
@@ -27,10 +28,16 @@ func (h *TaskHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var scheduledAtValue time.Time
+	if req.ScheduledAt != nil {
+		scheduledAtValue = *req.ScheduledAt
+	}
+
 	created, err := h.usecase.Create(r.Context(), taskusecase.CreateInput{
 		Title:       req.Title,
 		Description: req.Description,
 		Status:      req.Status,
+		ScheduledAt: scheduledAtValue,
 	})
 	if err != nil {
 		writeUsecaseError(w, err)
@@ -69,10 +76,16 @@ func (h *TaskHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var scheduledAtValue time.Time
+	if req.ScheduledAt != nil {
+		scheduledAtValue = *req.ScheduledAt
+	}
+
 	updated, err := h.usecase.Update(r.Context(), id, taskusecase.UpdateInput{
 		Title:       req.Title,
 		Description: req.Description,
 		Status:      req.Status,
+		ScheduledAt: scheduledAtValue,
 	})
 	if err != nil {
 		writeUsecaseError(w, err)
@@ -98,6 +111,12 @@ func (h *TaskHandler) Delete(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *TaskHandler) List(w http.ResponseWriter, r *http.Request) {
+	filters, err := parseTaskListFilters(r)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, err)
+		return
+	}
+
 	tasks, err := h.usecase.List(r.Context())
 	if err != nil {
 		writeUsecaseError(w, err)
@@ -106,6 +125,10 @@ func (h *TaskHandler) List(w http.ResponseWriter, r *http.Request) {
 
 	response := make([]taskDTO, 0, len(tasks))
 	for i := range tasks {
+		if !filters.Matches(tasks[i]) {
+			continue
+		}
+
 		response = append(response, newTaskDTO(&tasks[i]))
 	}
 
@@ -131,6 +154,7 @@ func getIDFromRequest(r *http.Request) (int64, error) {
 }
 
 func decodeJSON(r *http.Request, dst any) error {
+	defer r.Body.Close()
 	decoder := json.NewDecoder(r.Body)
 	decoder.DisallowUnknownFields()
 
